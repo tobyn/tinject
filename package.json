@@ -1,0 +1,19 @@
+{
+  "name": "tinject",
+  "version": "0.0.1",
+  "description": "Simple DI",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "author": "Tobyn Baugher <tobynb@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^1.20.1"
+  },
+  "dependencies": {
+    "async": "^0.9.0",
+    "bluebird": "^2.2.2",
+    "lodash": "^2.4.1"
+  }
+}
