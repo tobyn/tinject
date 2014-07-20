@@ -40,8 +40,8 @@ describe("An injected function",function() {
 
     it("should pass inject-time extra arguments",function(done) {
       var f = injector.inject(di.fn.ignore("foo",function(foo, bar) {
-        assert.equal(foo,"foo")
-        assert.equal(bar,"bar")
+        assert.equal(foo,"foo");
+        assert.equal(bar,"bar");
       }),"bar");
 
       f(function(err) {
@@ -52,8 +52,8 @@ describe("An injected function",function() {
 
     it("should pass call-time extra arguments",function(done) {
       var f = injector.inject(di.fn.ignore("foo",function(foo, bar) {
-        assert.equal(foo,"foo")
-        assert.equal(bar,"bar")
+        assert.equal(foo,"foo");
+        assert.equal(bar,"bar");
       }));
 
       f("bar",function(err) {

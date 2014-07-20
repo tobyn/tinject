@@ -61,7 +61,7 @@ Injector.prototype = {
   inject: function(/* f, ...extraArgs */) {
     var args = _.toArray(arguments);
 
-    args.unshift(_.bindKey(this,"invoke"))
+    args.unshift(_.bindKey(this,"invoke"));
 
     return _.partial.apply(_,args);
   },
@@ -78,12 +78,12 @@ Injector.prototype = {
         normalizedApply(f,args.concat(extraArgs),callback);
     });
 
-    function handleResolution(dependency, callback) {
+    function handleResolution(dependency, resolveCallback) {
       i.resolve(dependency,function(err, result) {
         if (err)
-          callback(new ProviderError(dependency,err));
+          resolveCallback(new ProviderError(dependency,err));
         else
-          callback(null,result);
+          resolveCallback(null,result);
       });
     }
   },
