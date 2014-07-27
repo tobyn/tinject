@@ -27,8 +27,10 @@ exports.ProviderError = ProviderError;
 
 function ProviderError(dependency, error) {
   this.dependency = dependency;
+  this.name = "ProviderError";
   this.error = error;
   this.message = dependency + ": " + (error.message || error.toString());
+  Error.captureStackTrace(this,this.constructor);
 }
 
 ProviderError.prototype = new Error();
@@ -58,6 +60,9 @@ function Injector() {
 }
 
 Injector.prototype = {
+  inherit: function(other) {
+  },
+
   inject: function(/* f, ...extraArgs */) {
     var args = _.toArray(arguments);
 
