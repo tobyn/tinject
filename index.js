@@ -65,6 +65,7 @@ function Injector() {
 
 Injector.prototype = {
   inherit: function(other) {
+    this.parents.unshift(other);
   },
 
   inject: function(/* f, ...extraArgs */) {
@@ -170,7 +171,17 @@ function getProvider(injector, dependency) {
 }
 
 function hasSameDependencyGraph(a, b, dependency) {
-  return false;
+  var aProvider = getProvider(a,dependency),
+      bProvider = getProvider(b,dependency);
+
+  if (aProvider !== bProvider)
+    return false;
+
+  var dependencies = getDependencies(aProvider);
+
+  return _.all(dependencies,function(d) {
+    return hasSameDependencyGraph(a,b,d);
+  });
 }
 
 function normalizedApply(f, args, callback) {

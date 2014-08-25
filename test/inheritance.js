@@ -9,12 +9,12 @@ describe("Inheriting from another injector",function() {
   beforeEach(function() {
     injector = di.injector();
     other = di.injector();
+
+    injector.inherit(other);
   });
 
   it("should make the parent's providers available",function(callback) {
     other.provide("foo","foo");
-
-    injector.inherit(other);
 
     injector.invoke(di.fn.ignore("foo",function(foo) {
       assert.equal(foo,"foo");
@@ -26,16 +26,15 @@ describe("Inheriting from another injector",function() {
 
   it("should prefer providers from more recently inherited injectors",
     function(callback) {
-      var ignored = di.injector();
+      var newer = di.injector();
 
-      other.provide("foo","other");
-      ignored.provide("foo","ignored");
+      other.provide("foo","older");
+      newer.provide("foo","newer");
 
-      injector.inherit(ignored);
-      injector.inherit(other);
+      injector.inherit(newer);
 
       injector.invoke(di.fn.ignore("foo",function(foo) {
-        assert.equal(foo,"other");
+        assert.equal(foo,"newer");
       }),function(err) {
         assert.ifError(err);
         callback();
@@ -62,6 +61,8 @@ describe("Inheriting from another injector",function() {
       calls++;
       return "foo";
     });
+
+    injector.inherit(other);
 
     var f = di.fn.sync("foo",_.identity);
 

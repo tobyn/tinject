@@ -14,7 +14,7 @@ describe("An injected function",function() {
     }));
   });
 
-  it("should not resolve dependencies unless called",function() {
+  it("should not resolve dependencies immediately",function() {
     var resolved = false;
 
     injector.provide("unneeded",function() {
