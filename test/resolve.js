@@ -2,7 +2,7 @@ var _ = require("lodash"),
     assert = require("assert"),
     async = require("async"),
     di = require(".."),
-    Promise = require("bluebird");
+    bluebird = require("bluebird");
 
 describe("Resolving a dependency",function() {
   var expectedError = new Error("Expected"),
@@ -25,7 +25,7 @@ describe("Resolving a dependency",function() {
 
   it("should work recursively",function(done) {
     injector.provide("foo",di.fn.promise(function() {
-      return Promise.resolve("FOO").delay(1);
+      return bluebird.resolve("FOO").delay(1);
     }));
 
     injector.provide("bar",di.fn.async(function(callback) {
@@ -64,7 +64,7 @@ describe("Resolving a dependency",function() {
 
   describe("from a promise",function() {
     it("should pass fulfillment values",function(done) {
-      injector.provide("foo",Promise.resolve("bar").delay(1));
+      injector.provide("foo",bluebird.resolve("bar").delay(1));
 
       injector.resolve("foo",function(err, foo) {
         assert.ifError(err);
@@ -74,7 +74,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass rejection errors",function(done) {
-      injector.provide("foo",Promise.reject(expectedError));
+      injector.provide("foo",bluebird.reject(expectedError));
 
       injector.resolve("foo",function(err) {
         assert.strictEqual(err,expectedError);
@@ -269,7 +269,7 @@ describe("Resolving a dependency",function() {
   describe("from a promise provider function",function() {
     it("should pass fulfillment values",function(done) {
       injector.provide("foo",di.fn.promise(function() {
-        return Promise.resolve("bar").delay(1);
+        return bluebird.resolve("bar").delay(1);
       }));
 
       injector.resolve("foo",function(err, foo) {
@@ -292,7 +292,7 @@ describe("Resolving a dependency",function() {
 
     it("should pass rejection errors",function(done) {
       injector.provide("foo",di.fn.promise(function() {
-        return Promise.reject(expectedError);
+        return bluebird.reject(expectedError);
       }));
 
       injector.resolve("foo",function(err) {
@@ -307,7 +307,7 @@ describe("Resolving a dependency",function() {
 
       injector.provide("foo",di.fn.promise(function() {
         calls++;
-        return Promise.resolve("bar").delay(1);
+        return bluebird.resolve("bar").delay(1);
       }));
 
       async.parallel([resolve,resolve,resolve],function(err, results) {

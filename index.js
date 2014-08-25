@@ -32,9 +32,7 @@ function annotator(callingConvention, extractor) {
 }
 
 
-exports.value = function(value) {
-  return valueProvider(value);
-};
+exports.value = valueProvider;
 
 
 exports.ProviderError = ProviderError;

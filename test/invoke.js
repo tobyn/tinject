@@ -1,6 +1,6 @@
 var assert = require("assert"),
     di = require(".."),
-    Promise = require("bluebird");
+    bluebird = require("bluebird");
 
 describe("Invoking",function() {
   var expectedError = new Error("Expected"),
@@ -164,7 +164,7 @@ describe("Invoking",function() {
   describe("a promise-returning function",function() {
     it("should resolve dependencies",function(done) {
       injector.invoke(di.fn.promise("foo",function(foo) {
-        return Promise.resolve("foo");
+        return bluebird.resolve("foo");
       }),done);
     });
 
@@ -172,13 +172,13 @@ describe("Invoking",function() {
       injector.invoke(di.fn.promise("foo",function(foo, bar) {
         assert.equal(foo,"foo");
         assert.equal(bar,"bar");
-        return Promise.resolve();
+        return bluebird.resolve();
       }),"bar",done);
     });
 
     it("should pass results to the callback",function(done) {
       injector.invoke(di.fn.promise("foo",function(foo) {
-        return Promise.resolve(foo.toUpperCase());
+        return bluebird.resolve(foo.toUpperCase());
       }),function(err, foo) {
         assert.ifError(err);
         assert.equal(foo,"FOO");
@@ -197,7 +197,7 @@ describe("Invoking",function() {
 
     it("should pass rejection errors to the callback",function(done) {
       injector.invoke(di.fn.promise(function() {
-        return Promise.reject(expectedError);
+        return bluebird.reject(expectedError);
       }),function(err) {
         assert.strictEqual(err,expectedError);
         done();
