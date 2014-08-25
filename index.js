@@ -109,14 +109,19 @@ Injector.prototype = {
       _.forIn(name,function(realProvider, realName) {
         this.provide(realName,realProvider);
       },this);
-    } else {
-      if (provider.then)
-        provider = promiseProvider(provider);
-      else if (!_.isFunction(provider))
-        provider = valueProvider(provider);
 
-      this.providers[name] = provider;
+      return;
     }
+
+    if (name in this.providers)
+      throw new Error(name + ": Provider already defined");
+
+    if (provider.then)
+      provider = promiseProvider(provider);
+    else if (!_.isFunction(provider))
+      provider = valueProvider(provider);
+
+    this.providers[name] = provider;
   },
 
   resolve: function(name, callback) {
