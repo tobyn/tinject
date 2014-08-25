@@ -105,12 +105,18 @@ Injector.prototype = {
   },
 
   provide: function(name, provider) {
-    if (provider.then)
-      provider = promiseProvider(provider);
-    else if (!_.isFunction(provider))
-      provider = valueProvider(provider);
+    if (arguments.length === 1) {
+      _.forIn(name,function(realProvider, realName) {
+        this.provide(realName,realProvider);
+      },this);
+    } else {
+      if (provider.then)
+        provider = promiseProvider(provider);
+      else if (!_.isFunction(provider))
+        provider = valueProvider(provider);
 
-    this.providers[name] = provider;
+      this.providers[name] = provider;
+    }
   },
 
   resolve: function(name, callback) {
@@ -224,7 +230,7 @@ function promiseProvider(promise) {
 }
 
 function valueProvider(value) {
-  return fn.sync(function() {
+  return function() {
     return value;
-  });
+  };
 }

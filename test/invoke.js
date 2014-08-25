@@ -13,6 +13,23 @@ describe("Invoking",function() {
   });
 
 
+  it("should work with providers declared in bulk",function(done) {
+    injector.provide({
+      bar: "bar",
+      baz: "baz"
+    });
+
+    injector.invoke(di.fn.ignore("foo","bar","baz",function(foo, bar, baz) {
+      assert.equal(foo,"foo");
+      assert.equal(bar,"bar");
+      assert.equal(baz,"baz");
+    }),function(err) {
+      assert.ifError(err);
+      done();
+    });
+  });
+
+
   describe("an un-annotated function",function() {
     it("should pass any arguments",function(done) {
       var args;
