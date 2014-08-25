@@ -21,7 +21,7 @@ _.each({
 });
 
 function annotator(callingConvention, extractor) {
-  return function(/* ...dependencies, f */) {
+  return function(/* dependencies..., f */) {
     var f = extractor(arguments);
 
     f.callingConvention = callingConvention;
@@ -50,8 +50,14 @@ function ProviderError(dependency, error) {
 ProviderError.prototype = new Error();
 
 
-exports.injector = function() {
-  return new Injector();
+exports.injector = function(/* parents... */) {
+  var i = new Injector();
+
+  _.each(arguments,function(p) {
+    i.inherit(p);
+  });
+
+  return i;
 };
 
 exports.Injector = Injector;
@@ -68,7 +74,7 @@ Injector.prototype = {
     this.parents.unshift(other);
   },
 
-  inject: function(/* f, ...extraArgs */) {
+  inject: function(/* f, extraArgs... */) {
     var args = _.toArray(arguments);
 
     args.unshift(_.bindKey(this,"invoke"));
@@ -76,7 +82,7 @@ Injector.prototype = {
     return _.partial.apply(_,args);
   },
 
-  invoke: function(f/*, ...extraArgs, callback */) {
+  invoke: function(f/*, extraArgs..., callback */) {
     var i = this,
         extraArgs = _.initial(_.rest(arguments)),
         callback = _.last(arguments);
