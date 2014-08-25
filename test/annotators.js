@@ -2,12 +2,12 @@ var assert = require("assert"),
     di = require("..");
 
 describe("Declaring dependencies",function() {
-  testAnnotator("ignore","a void");
-  testAnnotator("sync","a synchronous");
-  testAnnotator("async","an asynchronous");
-  testAnnotator("promise","a promise-returning");
+  testAnnotator("ignore",di.fn.IGNORE,"a void");
+  testAnnotator("sync",di.fn.SYNC,"a synchronous");
+  testAnnotator("async",di.fn.ASYNC,"an asynchronous");
+  testAnnotator("promise",di.fn.PROMISE,"a promise-returning");
 
-  function testAnnotator(callingConvention, label) {
+  function testAnnotator(callingConvention, code, label) {
     describe("for " + label + " function",function() {
       describe("mutably",function() {
         function f() { }
@@ -47,7 +47,7 @@ describe("Declaring dependencies",function() {
         });
 
         it("should set the function's \"callingConvention\" property",function() {
-          assert.equal(fDep.callingConvention,callingConvention);
+          assert.equal(fDep.callingConvention,code);
         });
       }
     });

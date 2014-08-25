@@ -24,17 +24,17 @@ describe("Resolving a dependency",function() {
   });
 
   it("should work recursively",function(done) {
-    injector.provider("foo",di.fn.promise(function() {
+    injector.provide("foo",di.fn.promise(function() {
       return Promise.resolve("FOO").delay(1);
     }));
 
-    injector.provider("bar",di.fn.async(function(callback) {
+    injector.provide("bar",di.fn.async(function(callback) {
       setTimeout(function() {
         callback(null,"BAR");
       });
     }));
 
-    injector.provider("foobar",di.fn.sync("foo","bar",function(foo, bar) {
+    injector.provide("foobar",di.fn.sync("foo","bar",function(foo, bar) {
       return foo + bar;
     }));
 
@@ -46,11 +46,11 @@ describe("Resolving a dependency",function() {
   });
 
   it("should bubble up recursive errors",function(done) {
-    injector.provider("foo",di.fn.sync(function() {
+    injector.provide("foo",di.fn.sync(function() {
       throw expectedError;
     }));
 
-    injector.provider("bar",di.fn.sync("foo",function(foo) {
+    injector.provide("bar",di.fn.sync("foo",function(foo) {
       return "bar";
     }));
 
@@ -64,7 +64,7 @@ describe("Resolving a dependency",function() {
 
   describe("from a promise",function() {
     it("should pass fulfillment values",function(done) {
-      injector.providePromise("foo",Promise.resolve("bar").delay(1));
+      injector.provide("foo",Promise.resolve("bar").delay(1));
 
       injector.resolve("foo",function(err, foo) {
         assert.ifError(err);
@@ -74,7 +74,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass rejection errors",function(done) {
-      injector.providePromise("foo",Promise.reject(expectedError));
+      injector.provide("foo",Promise.reject(expectedError));
 
       injector.resolve("foo",function(err) {
         assert.strictEqual(err,expectedError);
@@ -86,7 +86,7 @@ describe("Resolving a dependency",function() {
 
   describe("from an un-annotated provider function",function() {
     it("should pass return values",function(done) {
-      injector.provider("foo",function() {
+      injector.provide("foo",function() {
         return "bar";
       });
 
@@ -98,7 +98,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass thrown errors",function(done) {
-      injector.provider("foo",function() {
+      injector.provide("foo",function() {
         throw expectedError;
       });
 
@@ -112,7 +112,7 @@ describe("Resolving a dependency",function() {
       var calls = 0,
           resolve = _.partial(_.bindKey(injector,"resolve"),"foo");
 
-      injector.provider("foo",function() {
+      injector.provide("foo",function() {
         calls++;
         return "bar";
       });
@@ -128,7 +128,7 @@ describe("Resolving a dependency",function() {
 
   describe("from a void provider function",function() {
     it("should discard returned values",function(done) {
-      injector.provider("foo",di.fn.ignore(function() {
+      injector.provide("foo",di.fn.ignore(function() {
         return "bar";
       }));
 
@@ -140,7 +140,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass thrown errors",function(done) {
-      injector.provider("foo",di.fn.ignore(function() {
+      injector.provide("foo",di.fn.ignore(function() {
         throw expectedError;
       }));
 
@@ -154,7 +154,7 @@ describe("Resolving a dependency",function() {
       var calls = 0,
           resolve = _.partial(_.bindKey(injector,"resolve"),"foo");
 
-      injector.provider("foo",di.fn.ignore(function() {
+      injector.provide("foo",di.fn.ignore(function() {
         calls++;
         return "bad";
       }));
@@ -169,7 +169,7 @@ describe("Resolving a dependency",function() {
 
   describe("from a synchronous provider function",function() {
     it("should pass return values",function(done) {
-      injector.provider("foo",di.fn.sync(function() {
+      injector.provide("foo",di.fn.sync(function() {
         return "bar";
       }));
 
@@ -181,7 +181,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass thrown errors",function(done) {
-      injector.provider("foo",di.fn.sync(function() {
+      injector.provide("foo",di.fn.sync(function() {
         throw expectedError;
       }));
 
@@ -195,7 +195,7 @@ describe("Resolving a dependency",function() {
       var calls = 0,
           resolve = _.partial(_.bindKey(injector,"resolve"),"foo");
 
-      injector.provider("foo",di.fn.sync(function() {
+      injector.provide("foo",di.fn.sync(function() {
         calls++;
         return "bar";
       }));
@@ -211,7 +211,7 @@ describe("Resolving a dependency",function() {
 
   describe("from an asynchronous provider function",function() {
     it("should pass values given to the callback",function(done) {
-      injector.provider("foo",di.fn.async(function(callback) {
+      injector.provide("foo",di.fn.async(function(callback) {
         process.nextTick(function() {
           callback(null,"bar");
         });
@@ -225,7 +225,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass thrown errors",function(done) {
-      injector.provider("foo",di.fn.async(function() {
+      injector.provide("foo",di.fn.async(function() {
         throw expectedError;
       }));
 
@@ -236,7 +236,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass errors given to the callback",function(done) {
-      injector.provider("foo",di.fn.async(function(callback) {
+      injector.provide("foo",di.fn.async(function(callback) {
         callback(expectedError);
       }));
 
@@ -250,7 +250,7 @@ describe("Resolving a dependency",function() {
       var calls = 0,
           resolve = _.partial(_.bindKey(injector,"resolve"),"foo");
 
-      injector.provider("foo",di.fn.async(function(callback) {
+      injector.provide("foo",di.fn.async(function(callback) {
         calls++;
         setTimeout(function() {
           callback(null,"bar");
@@ -268,7 +268,7 @@ describe("Resolving a dependency",function() {
 
   describe("from a promise provider function",function() {
     it("should pass fulfillment values",function(done) {
-      injector.provider("foo",di.fn.promise(function() {
+      injector.provide("foo",di.fn.promise(function() {
         return Promise.resolve("bar").delay(1);
       }));
 
@@ -280,7 +280,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass thrown errors",function(done) {
-      injector.provider("foo",di.fn.promise(function() {
+      injector.provide("foo",di.fn.promise(function() {
         throw expectedError;
       }));
 
@@ -291,7 +291,7 @@ describe("Resolving a dependency",function() {
     });
 
     it("should pass rejection errors",function(done) {
-      injector.provider("foo",di.fn.promise(function() {
+      injector.provide("foo",di.fn.promise(function() {
         return Promise.reject(expectedError);
       }));
 
@@ -305,7 +305,7 @@ describe("Resolving a dependency",function() {
       var calls = 0,
           resolve = _.partial(_.bindKey(injector,"resolve"),"foo");
 
-      injector.provider("foo",di.fn.promise(function() {
+      injector.provide("foo",di.fn.promise(function() {
         calls++;
         return Promise.resolve("bar").delay(1);
       }));

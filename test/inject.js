@@ -7,7 +7,7 @@ describe("An injected function",function() {
   beforeEach(function() {
     injector = di.injector();
 
-    injector.provider("foo",di.fn.async(function(callback) {
+    injector.provide("foo",di.fn.async(function(callback) {
       process.nextTick(function() {
         callback(null,"foo");
       });
@@ -17,7 +17,7 @@ describe("An injected function",function() {
   it("should not resolve dependencies unless called",function() {
     var resolved = false;
 
-    injector.provider("unneeded",function() {
+    injector.provide("unneeded",function() {
       resolved = true;
     });
 

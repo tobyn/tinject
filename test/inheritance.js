@@ -43,7 +43,7 @@ describe("Inheriting from another injector",function() {
     });
 
   it("should prefer non-inherited providers",function(callback) {
-    injector.provider("foo",function() { return "local"; });
+    injector.provide("foo",function() { return "local"; });
 
     other.provide("foo","inherited");
 
@@ -58,7 +58,7 @@ describe("Inheriting from another injector",function() {
   it("should share inherited dependencies",function(callback) {
     var calls = 0;
 
-    other.provider("foo",function() {
+    other.provide("foo",function() {
       calls++;
       return "foo";
     });
@@ -77,7 +77,7 @@ describe("Inheriting from another injector",function() {
   });
 
   it("should require an identical dependency graph for sharing",function(callback) {
-    other.provider("foobar",di.fn.sync("foo",function(foo) {
+    other.provide("foobar",di.fn.sync("foo",function(foo) {
       return foo + "bar";
     }));
 

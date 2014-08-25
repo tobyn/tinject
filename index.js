@@ -1,14 +1,23 @@
 var _ = require("lodash"),
     async = require("async");
 
-
 var fn = exports.fn = {},
     ifn = exports.ifn = {},
     copyLast = _.compose(_.partial,_.last);
 
-_.each(["ignore", "sync", "async", "promise"],function(cc) {
-  fn[cc] = annotator(cc,_.last);
-  ifn[cc] = annotator(cc,copyLast);
+var IGNORE  = fn.IGNORE  = 1,
+    SYNC    = fn.SYNC    = 2,
+    ASYNC   = fn.ASYNC   = 3,
+    PROMISE = fn.PROMISE = 4;
+
+_.each({
+  ignore: IGNORE,
+  sync: SYNC,
+  async: ASYNC,
+  promise: PROMISE
+},function(code, cc) {
+  fn[cc] = annotator(code,_.last);
+  ifn[cc] = annotator(code,copyLast);
 });
 
 function annotator(callingConvention, extractor) {
@@ -23,6 +32,11 @@ function annotator(callingConvention, extractor) {
 }
 
 
+exports.value = function(value) {
+  return valueProvider(value);
+};
+
+
 exports.ProviderError = ProviderError;
 
 function ProviderError(dependency, error) {
@@ -30,21 +44,10 @@ function ProviderError(dependency, error) {
   this.name = "ProviderError";
   this.error = error;
   this.message = dependency + ": " + (error.message || error.toString());
-  Error.captureStackTrace(this,this.constructor);
+  Error.captureStackTrace(this,ProviderError);
 }
 
 ProviderError.prototype = new Error();
-
-
-exports.depend = depend;
-
-function depend(/* ...dependencies, fn */) {
-  var fn = _.last(arguments);
-
-  fn.dependencies = _.initial(arguments);
-
-  return fn;
-}
 
 
 exports.injector = function() {
@@ -54,6 +57,7 @@ exports.injector = function() {
 exports.Injector = Injector;
 
 function Injector() {
+  this.parents = [];
   this.cache = {};
   this.providers = {};
   this.resolveQueues = {};
@@ -84,65 +88,64 @@ Injector.prototype = {
     });
 
     function handleResolution(dependency, resolveCallback) {
-      i.resolve(dependency,function(err, result) {
+      i.resolve(dependency,function(err, value) {
         if (err)
           resolveCallback(new ProviderError(dependency,err));
         else
-          resolveCallback(null,result);
+          resolveCallback(null,value);
       });
     }
   },
 
-  provide: function(name, value) {
-    this.cache[name] = [null, value];
+  provide: function(name, provider) {
+    if (provider.then)
+      provider = promiseProvider(provider);
+    else if (!_.isFunction(provider))
+      provider = valueProvider(provider);
+
+    this.providers[name] = provider;
   },
 
-  providePromise: function(name, promise) {
-    this.providers[name] = fn.promise(function() {
-      return promise;
-    });
-  },
-
-  provider: function(name, factory) {
-    this.providers[name] = factory;
-  },
-
-  resolve: function(dependency, callback) {
+  resolve: function(name, callback) {
     var i = this,
-        cachedResult = i.cache[dependency];
+        cache = i.cache;
 
-    // This dependency has been resolved already.
-    if (cachedResult) {
-      callback.apply(i,cachedResult);
+    if (name in cache) {
+      callback.apply(null,cache[name]);
       return;
     }
 
-    var resolveQueue = i.resolveQueues[dependency];
+    var resolveQueues = i.resolveQueues,
+        queue = resolveQueues[name];
 
-    // This dependency is being resolved in response to an earlier
-    // request. All we need to do is wait.
-    if (resolveQueue) {
-      resolveQueue.push(callback);
+    if (queue) {
+      queue.push(callback);
       return;
     }
 
-    var provider = i.providers[dependency];
-    if (!provider) {
-      callback(new Error("Not provided"));
+    var provider = getProvider(i,name);
+    if (!provider)
+      throw new Error("Not provided");
+
+    var parentWithSameGraph = _.find(i.parents,function(p) {
+      return hasSameDependencyGraph(i,p,name);
+    });
+
+    if (parentWithSameGraph) {
+      parentWithSameGraph.resolve(name,callback);
       return;
     }
 
-    resolveQueue = i.resolveQueues[dependency] = [callback];
+    queue = resolveQueues[name] = [callback];
 
-    i.invoke(provider,function(err, result) {
-      cachedResult = i.cache[dependency] = [err, result];
+    i.invoke(provider,function(err, value) {
+      cache[name] = [err, value];
 
-      _.each(resolveQueue,function(queuedCallback) {
-        queuedCallback.apply(i,cachedResult);
+      _.each(queue,function(f) {
+        f(err,value);
       });
 
-      resolveQueue = undefined;
-      delete i.resolveQueues[dependency];
+      delete resolveQueues[name];
     });
   }
 };
@@ -152,18 +155,35 @@ function getDependencies(f) {
   return f.dependencies || [];
 }
 
+function getProvider(injector, dependency) {
+  var provider = injector.providers[dependency];
+  if (provider)
+    return provider;
+
+  _.each(injector.parents,function(p) {
+    provider = getProvider(p,dependency);
+    if (provider)
+      return false;
+  });
+
+  return provider;
+}
+
+function hasSameDependencyGraph(a, b, dependency) {
+  return false;
+}
+
 function normalizedApply(f, args, callback) {
   var cc = f.callingConvention;
-
   try {
-    if (cc === "ignore") {
+    if (cc === IGNORE) {
       f.apply(this,args);
       callback();
-    } else if (cc === "async") {
+    } else if (cc === ASYNC) {
       args = args.slice();
       args.push(callback);
       f.apply(this,args);
-    } else if (cc === "promise") {
+    } else if (cc === PROMISE) {
       f.apply(this,args)
         .then(function(value) {
           callback(null,value);
@@ -174,4 +194,20 @@ function normalizedApply(f, args, callback) {
   } catch (err) {
     callback(err);
   }
+}
+
+function promiseProvider(promise) {
+  return fn.async(function(callback) {
+    promise.then(function(value) {
+      callback(null,value);
+    },function(err) {
+      callback(err);
+    });
+  });
+}
+
+function valueProvider(value) {
+  return fn.sync(function() {
+    return value;
+  });
 }
