@@ -1,33 +1,43 @@
-var _ = require("lodash");
-
 var fn = exports.fn = {},
     ifn = exports.ifn = {},
-    copyLast = _.compose(_.partial,_.last);
+    slice = Array.prototype.slice;
 
 var IGNORE  = fn.IGNORE  = 1,
     SYNC    = fn.SYNC    = 2,
     ASYNC   = fn.ASYNC   = 3,
     PROMISE = fn.PROMISE = 4;
 
-_.each({
-  ignore: IGNORE,
-  sync: SYNC,
-  async: ASYNC,
-  promise: PROMISE
-},function(code, cc) {
-  fn[cc] = annotator(code,_.last);
-  ifn[cc] = annotator(code,copyLast);
-});
+fn.ignore = annotator(IGNORE,extractFn);
+fn.sync = annotator(SYNC,extractFn);
+fn.async = annotator(ASYNC,extractFn);
+fn.promise = annotator(PROMISE,extractFn);
+
+ifn.ignore = annotator(IGNORE,copyFn);
+ifn.sync = annotator(SYNC,copyFn);
+ifn.async = annotator(ASYNC,copyFn);
+ifn.promise = annotator(PROMISE,copyFn);
 
 function annotator(callingConvention, extractor) {
   return function(/* dependencies..., f */) {
     var f = extractor(arguments);
 
     f.callingConvention = callingConvention;
-    f.dependencies = _.initial(arguments);
+    f.dependencies = slice.call(arguments,0,arguments.length-1);
     
     return f;
   };
+}
+
+function copyFn(args) {
+  var fn = extractFn(args);
+
+  return function() {
+    fn.apply(this,arguments);
+  };
+}
+
+function extractFn(args) {
+  return args[args.length-1];
 }
 
 
@@ -48,13 +58,12 @@ ProviderError.prototype = new Error();
 
 
 exports.injector = function(/* parents... */) {
-  var i = new Injector();
+  var injector = new Injector();
 
-  _.each(arguments,function(p) {
-    i.inherit(p);
-  });
+  for (var i = 0, len = arguments.length; i < len; i++)
+    injector.inherit(arguments[i]);
 
-  return i;
+  return injector;
 };
 
 exports.Injector = Injector;
@@ -72,17 +81,21 @@ Injector.prototype = {
   },
 
   inject: function(/* f, extraArgs... */) {
-    var args = _.toArray(arguments);
+    var preArgs = slice.call(arguments),
+        injector = this;
 
-    args.unshift(_.bindKey(this,"invoke"));
-
-    return _.partial.apply(_,args);
+    return function() {
+      var args = slice.call(arguments);
+      args.unshift.apply(args,preArgs);
+      injector.invoke.apply(injector,args);
+    };
   },
 
   invoke: function(f/*, extraArgs..., callback */) {
     var i = this,
-        extraArgs = _.initial(_.rest(arguments)),
-        callback = _.last(arguments);
+        lastIndex = arguments.length - 1,
+        extraArgs = slice.call(arguments,1,lastIndex),
+        callback = arguments[lastIndex];
 
     resolveDependencies(i,f,function(err, args) {
       if (err)
@@ -94,9 +107,8 @@ Injector.prototype = {
 
   provide: function(name, provider) {
     if (arguments.length === 1) {
-      _.forIn(name,function(realProvider, realName) {
-        this.provide(realName,realProvider);
-      },this);
+      for (var realName in name)
+        this.provide(realName,name[realName]);
 
       return;
     }
@@ -106,22 +118,22 @@ Injector.prototype = {
 
     if (provider.then)
       provider = promiseProvider(provider);
-    else if (!_.isFunction(provider))
+    else if (typeof provider !== "function")
       provider = valueProvider(provider);
 
     this.providers[name] = provider;
   },
 
   resolve: function(name, callback) {
-    var i = this,
-        cache = i.cache;
+    var injector = this,
+        cache = injector.cache;
 
     if (name in cache) {
       callback.apply(null,cache[name]);
       return;
     }
 
-    var resolveQueues = i.resolveQueues,
+    var resolveQueues = injector.resolveQueues,
         queue = resolveQueues[name];
 
     if (queue) {
@@ -129,27 +141,27 @@ Injector.prototype = {
       return;
     }
 
-    var provider = getProvider(i,name);
+    var provider = getProvider(injector,name);
     if (!provider)
       throw new Error("Not provided");
 
-    var parentWithSameGraph = _.find(i.parents,function(p) {
-      return hasSameDependencyGraph(i,p,name);
-    });
-
-    if (parentWithSameGraph) {
-      parentWithSameGraph.resolve(name,callback);
-      return;
+    var parents = injector.parents,
+        parentWithSameGraph;
+    for (var p, i = 0, len = parents.length; i < len; i++) {
+      p = parents[i];
+      if (hasSameDependencyGraph(injector,p,name)) {
+        p.resolve(name,callback);
+        return;
+      }
     }
 
     queue = resolveQueues[name] = [callback];
 
-    i.invoke(provider,function(err, value) {
+    injector.invoke(provider,function(err, value) {
       cache[name] = [err, value];
 
-      _.each(queue,function(f) {
-        f(err,value);
-      });
+      for (var i = 0, len = queue.length; i < len; i++)
+        queue[i](err,value);
 
       delete resolveQueues[name];
     });
@@ -166,13 +178,12 @@ function getProvider(injector, dependency) {
   if (provider)
     return provider;
 
-  _.each(injector.parents,function(p) {
-    provider = getProvider(p,dependency);
+  var parents = injector.parents;
+  for (var i = 0, len = parents.length; i < len; i++) {
+    provider = getProvider(parents[i],dependency);
     if (provider)
-      return false;
-  });
-
-  return provider;
+      return provider;
+  }
 }
 
 function hasSameDependencyGraph(a, b, dependency) {
@@ -184,9 +195,12 @@ function hasSameDependencyGraph(a, b, dependency) {
 
   var dependencies = getDependencies(aProvider);
 
-  return _.all(dependencies,function(d) {
-    return hasSameDependencyGraph(a,b,d);
-  });
+  for (var i = 0, len = dependencies.length; i < len; i++) {
+    if (!hasSameDependencyGraph(a,b,dependencies[i]))
+      return false;
+  }
+
+  return true;
 }
 
 function normalizedApply(f, args, callback) {
