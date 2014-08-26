@@ -1,7 +1,7 @@
 {
   "name": "tinject",
-  "version": "0.0.1",
-  "description": "Simple DI",
+  "version": "1.0.0",
+  "description": "A tiny dependency injection library.",
   "main": "index.js",
   "scripts": {
     "test": "mocha"

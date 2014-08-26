@@ -132,7 +132,7 @@ Injector.prototype = {
     if (name in this.providers)
       throw new Error(name + ": Provider already defined");
 
-    if (provider.then)
+    if (typeof provider.then === "function")
       provider = promiseProvider(provider);
     else if (typeof provider !== "function")
       provider = valueProvider(provider);
