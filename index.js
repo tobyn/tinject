@@ -1,3 +1,18 @@
+(function() {
+
+var exports;
+if (typeof module !== "undefined") {
+  exports = module.exports;
+} else {
+  var oldDI = window.di;
+  exports = window.di = {};
+
+  exports.noConflict = function() {
+    window.di = oldDI;
+    return exports;
+  };
+}
+
 var fn = exports.fn = {},
     ifn = exports.ifn = {},
     slice = Array.prototype.slice;
@@ -283,3 +298,5 @@ function valueProvider(value) {
     return value;
   };
 }
+
+})();
