@@ -7,6 +7,13 @@ async.auto, with some memoization magic, and support for promises.
 It's small (~1.5KB minified and gzipped), has no dependencies, and works
 in node.js or any reasonably modern browser (or it's a bug).
 
+Install
+-------
+
+```
+npm install tinject
+```
+
 Setup
 -----
 
