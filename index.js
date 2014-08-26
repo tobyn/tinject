@@ -56,17 +56,18 @@ function extractFn(args) {
 }
 
 
-exports.value = valueProvider;
-
-
 exports.ProviderError = ProviderError;
+
+var captureTraces = typeof Error.captureStackTrace === "function";
 
 function ProviderError(dependency, error) {
   this.dependency = dependency;
   this.name = "ProviderError";
   this.error = error;
   this.message = dependency + ": " + (error.message || error.toString());
-  Error.captureStackTrace(this,ProviderError);
+
+  if (captureTraces)
+    Error.captureStackTrace(this,ProviderError);
 }
 
 ProviderError.prototype = new Error();
@@ -292,6 +293,9 @@ function promiseProvider(promise) {
     });
   });
 }
+
+
+exports.value = valueProvider;
 
 function valueProvider(value) {
   return function() {
