@@ -9,13 +9,13 @@
   "author": "Tobyn Baugher <tobynb@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "async": "^0.9.0",
     "bluebird": "^2.3.1",
     "express": "^4.8.5",
     "jshint": "^2.5.5",
     "mocha": "^1.21.4"
   },
   "dependencies": {
-    "async": "^0.9.0",
     "lodash": "^2.4.1"
   }
 }

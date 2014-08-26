@@ -1,5 +1,4 @@
-var _ = require("lodash"),
-    async = require("async");
+var _ = require("lodash");
 
 var fn = exports.fn = {},
     ifn = exports.ifn = {},
@@ -85,21 +84,12 @@ Injector.prototype = {
         extraArgs = _.initial(_.rest(arguments)),
         callback = _.last(arguments);
 
-    async.map(getDependencies(f),handleResolution,function(err, args) {
+    resolveDependencies(i,f,function(err, args) {
       if (err)
         callback(err);
       else
         normalizedApply(f,args.concat(extraArgs),callback);
     });
-
-    function handleResolution(dependency, resolveCallback) {
-      i.resolve(dependency,function(err, value) {
-        if (err)
-          resolveCallback(new ProviderError(dependency,err));
-        else
-          resolveCallback(null,value);
-      });
-    }
   },
 
   provide: function(name, provider) {
@@ -221,6 +211,48 @@ function normalizedApply(f, args, callback) {
     callback(err);
   }
 }
+
+function resolveDependencies(injector, f, callback) {
+  var deps = getDependencies(f),
+      depCount = deps.length,
+      results = [];
+
+  if (depCount === 0)
+    return finish();
+
+  var finished = false,
+      outstanding = depCount;
+
+  for (var i = 0; i < depCount; i++)
+    resolve(i);
+
+  function resolve(index) {
+    var dep = deps[index];
+
+    injector.resolve(dep,function(err, value) {
+      if (finished) return;
+
+      if (err) {
+        finished = true;
+        callback(new ProviderError(dep,err));
+        return;
+      }
+
+      results[index] = value;
+
+      outstanding--;
+      if (outstanding === 0) {
+        finished = true;
+        finish();
+      }
+    });
+  }
+
+  function finish() {
+    callback(null,results);
+  }
+}
+
 
 function promiseProvider(promise) {
   return fn.async(function(callback) {
