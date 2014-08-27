@@ -9,7 +9,7 @@ clean:
 	rm -rf $(MINIFIED) $(GZIPPED)
 
 minified:
-	./node_modules/.bin/uglifyjs index.js > $(MINIFIED)
+	./node_modules/.bin/uglifyjs tinject.js > $(MINIFIED)
 
 gzipped: minified
 	gzip -9c $(MINIFIED) > $(GZIPPED)

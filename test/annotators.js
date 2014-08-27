@@ -1,5 +1,5 @@
 var assert = require("assert"),
-    di = require("..");
+    di = require("../tinject");
 
 describe("Declaring dependencies",function() {
   testAnnotator("ignore",di.fn.IGNORE,"a void");

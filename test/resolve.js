@@ -1,7 +1,7 @@
 var _ = require("lodash"),
     assert = require("assert"),
     async = require("async"),
-    di = require(".."),
+    di = require("../tinject"),
     bluebird = require("bluebird");
 
 describe("Resolving a dependency",function() {

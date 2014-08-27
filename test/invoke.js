@@ -1,5 +1,5 @@
 var assert = require("assert"),
-    di = require(".."),
+    di = require("../tinject"),
     bluebird = require("bluebird");
 
 describe("Invoking",function() {

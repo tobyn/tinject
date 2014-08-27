@@ -1,5 +1,5 @@
 var assert = require("assert"),
-    di = require("..");
+    di = require("../tinject");
 
 describe("An injected function",function() {
   var injector;
