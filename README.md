@@ -13,6 +13,11 @@ Install
 ```
 npm install tinject
 ```
+```
+bower install tinject
+```
+
+You could also just download a copy of tinject.js and go nuts.
 
 Setup
 -----
