@@ -80,6 +80,23 @@ the callback are then handled as if they were passed to `invoke` on the
 same injector that received the `inject` call.
 
 ```js
+injector.provideInjected(name, fn, [extraArgs...]);
+```
+Creates a new provider with the given name. When the name is resolved,
+rather than calling `fn` and injecting the result, a new function is
+injected. When this function is called, it calls `fn` with its resolved
+dependencies, followed by any extra arguments passed to
+`provideInjected`, followed by any arguments passed to the injected
+function.
+
+```js
+injector.provideInjected(object);
+```
+Calling the provideInjected method with a single object will cause the
+injector to iterate over the properties of the object, calling
+provideInjected on each `name`/`fn` pair.
+
+```js
 injector.inherit(otherInjector);
 ```
 Causes the injector to inherit from `otherInjector`. Injectors that

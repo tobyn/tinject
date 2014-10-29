@@ -13,19 +13,19 @@ describe("Inheriting from another injector",function() {
     injector.inherit(other);
   });
 
-  it("should make the parent's providers available",function(callback) {
+  it("should make the parent's providers available",function(done) {
     other.provide("foo","foo");
 
     injector.invoke(di.fn.ignore("foo",function(foo) {
       assert.equal(foo,"foo");
     }),function(err) {
       assert.ifError(err);
-      callback();
+      done();
     });
   });
 
   it("should prefer providers from more recently inherited injectors",
-    function(callback) {
+    function(done) {
       var newer = di.injector();
 
       other.provide("foo","older");
@@ -37,11 +37,11 @@ describe("Inheriting from another injector",function() {
         assert.equal(foo,"newer");
       }),function(err) {
         assert.ifError(err);
-        callback();
+        done();
       });
     });
 
-  it("should prefer non-inherited providers",function(callback) {
+  it("should prefer non-inherited providers",function(done) {
     injector.provide("foo",function() { return "local"; });
 
     other.provide("foo","inherited");
@@ -50,11 +50,11 @@ describe("Inheriting from another injector",function() {
       assert.equal(foo,"local");
     }),function(err) {
       assert.ifError(err);
-      callback();
+      done();
     });
   });
 
-  it("should share inherited dependencies",function(callback) {
+  it("should share inherited dependencies",function(done) {
     var calls = 0;
 
     other.provide("foo",function() {
@@ -73,11 +73,11 @@ describe("Inheriting from another injector",function() {
       assert.ifError(err);
       assert.deepEqual(results,["foo","foo"]);
       assert.equal(1,calls);
-      callback();
+      done();
     });
   });
 
-  it("should require an identical dependency graph for sharing",function(callback) {
+  it("should require an identical dependency graph for sharing",function(done) {
     other.provide("foobar",di.fn.sync("foo",function(foo) {
       return foo + "bar";
     }));
@@ -93,7 +93,7 @@ describe("Inheriting from another injector",function() {
     ],function(err, results) {
       assert.ifError(err);
       assert.deepEqual(results,["FOObar","foobar"]);
-      callback();
+      done();
     });
   });
 });
