@@ -161,12 +161,11 @@ Injector.prototype = {
     if (!provider)
       throw new Error("Not provided");
 
-    var parents = injector.parents,
-        parentWithSameGraph;
+    var parents = injector.parents;
     for (var p, i = 0, len = parents.length; i < len; i++) {
       p = parents[i];
       if (hasSameDependencyGraph(injector,p,name)) {
-        p.resolve(name,callback);
+        p.resolve(name,resolvedInParent);
         return;
       }
     }
@@ -181,6 +180,11 @@ Injector.prototype = {
 
       delete resolveQueues[name];
     });
+
+    function resolvedInParent(err, value) {
+      cache[name] = [err, value];
+      callback(err,value);
+    }
   }
 };
 
