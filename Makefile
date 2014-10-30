@@ -3,7 +3,7 @@ GZIPPED=tinject.min.js.gz
 
 .PHONY: all clean lint minified gzipped test
 
-all: lint minified gzipped test
+all: lint test minified gzipped
 
 clean:
 	rm -rf $(MINIFIED) $(GZIPPED)

@@ -6,6 +6,7 @@ describe("Declaring dependencies",function() {
   testAnnotator("sync",di.fn.SYNC,"a synchronous");
   testAnnotator("async",di.fn.ASYNC,"an asynchronous");
   testAnnotator("promise",di.fn.PROMISE,"a promise-returning");
+  testAnnotator("injected",di.fn.INJECTED,"an injected");
 
   function testAnnotator(callingConvention, code, label) {
     describe("for " + label + " function",function() {

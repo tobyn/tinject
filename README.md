@@ -47,9 +47,9 @@ accept as a provider.
 ```js
 injector.provide(object);
 ```
-Calling the provide method with a single object will cause the injector
-to iterate over the properties of the object, registering a new provider
-for each `name`/`provider` pair.
+Calling the `provide` method with an object as the first argument will
+cause the injector to iterate over the properties of the object,
+registering a new provider for each `name`/`provider` pair.
 
 ```js
 injector.resolve(name, callback);
@@ -78,23 +78,6 @@ called, the extra arguments passed to it are appended to any extra
 arguments that were passed to `inject`. `fn`, the extra arguments, and
 the callback are then handled as if they were passed to `invoke` on the
 same injector that received the `inject` call.
-
-```js
-injector.provideInjected(name, fn, [extraArgs...]);
-```
-Creates a new provider with the given name. When the name is resolved,
-rather than calling `fn` and injecting the result, a new function is
-injected. When this function is called, it calls `fn` with its resolved
-dependencies, followed by any extra arguments passed to
-`provideInjected`, followed by any arguments passed to the injected
-function.
-
-```js
-injector.provideInjected(object);
-```
-Calling the provideInjected method with a single object will cause the
-injector to iterate over the properties of the object, calling
-provideInjected on each `name`/`fn` pair.
 
 ```js
 injector.inherit(otherInjector);
@@ -163,6 +146,18 @@ di.fn.promise([dependencies...,] fn);
 Promise providers are expected to return a then-able when called. If it
 resolves successfully, the resulting value is what is provided. If it is
 rejected, the rejection is treated as a provider error.
+
+```js
+di.fn.injected([dependencies...,] fn);
+```
+When an `injected` function is provided, it's not evaluated for its
+result. Instead, its dependencies are resolved, and a new function
+equivalent to a partially applied `fn` with its dependencies fixed is
+provided instead.
+
+Unlike other providers, no normalization of the interface of `fn` is
+performed. If it takes a callback or returns a promise, it's up to the
+caller to handle the result properly.
 
 ```js
 di.fn.ignore([dependencies...,] fn);

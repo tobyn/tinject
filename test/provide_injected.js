@@ -9,7 +9,7 @@ describe("A provided injected function",function() {
 
     injector.provide("foo","FOO");
 
-    injector.provideInjected("foobar",di.fn.ignore("foo",function(foo) {
+    injector.provide("foobar",di.fn.injected("foo",function(foo) {
       return foo + "bar";
     }));
   });
@@ -38,22 +38,8 @@ describe("A provided injected function",function() {
     });
   });
 
-  it("should pass provide-time extra arguments",function(done) {
-    injector.provideInjected("foobaz",di.fn.ignore("foo",function(foo, baz) {
-      return foo + baz;
-    }),"BAZ");
-
-    injector.invoke(di.fn.sync("foobaz",function(foobaz) {
-      return foobaz();
-    }),function(err, result) {
-      assert.ifError(err);
-      assert.equal(result,"FOOBAZ");
-      done();
-    });
-  });
-
-  it("should pass call-time extra arguments",function(done) {
-    injector.provideInjected("foobaz",di.fn.ignore("foo",function(foo, baz) {
+  it("should pass through call-time extra arguments",function(done) {
+    injector.provide("foobaz",di.fn.injected("foo",function(foo, baz) {
       return foo + baz;
     }));
 

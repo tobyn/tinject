@@ -17,20 +17,23 @@ var fn = exports.fn = {},
     ifn = exports.ifn = {},
     slice = Array.prototype.slice;
 
-var IGNORE  = fn.IGNORE  = 1,
-    SYNC    = fn.SYNC    = 2,
-    ASYNC   = fn.ASYNC   = 3,
-    PROMISE = fn.PROMISE = 4;
+var IGNORE   = fn.IGNORE  = 1,
+    SYNC     = fn.SYNC    = 2,
+    ASYNC    = fn.ASYNC   = 3,
+    PROMISE  = fn.PROMISE = 4,
+    INJECTED = fn.INJECTED = 5;
 
 fn.ignore = annotator(IGNORE,extractFn);
 fn.sync = annotator(SYNC,extractFn);
 fn.async = annotator(ASYNC,extractFn);
 fn.promise = annotator(PROMISE,extractFn);
+fn.injected = annotator(INJECTED,extractFn);
 
 ifn.ignore = annotator(IGNORE,copyFn);
 ifn.sync = annotator(SYNC,copyFn);
 ifn.async = annotator(ASYNC,copyFn);
 ifn.promise = annotator(PROMISE,copyFn);
+ifn.injected = annotator(INJECTED,copyFn);
 
 function annotator(callingConvention, extractor) {
   return function(/* dependencies..., f */) {
@@ -120,9 +123,15 @@ Injector.prototype = {
     });
   },
 
-  provide: function(name, provider) {
-    if (tryMultiProvide(this,this.provide,arguments))
+  provide: function(name, provider/*, extraArgs... */) {
+    if (typeof name === "object") {
+      var extraArgs = slice.call(arguments,1);
+
+      for (var realName in name)
+        this.provide.apply(this,[realName,name[realName]].concat(extraArgs));
+
       return;
+    }
 
     if (name in this.providers)
       throw new Error(name + ": Provider already defined");
@@ -131,30 +140,10 @@ Injector.prototype = {
       provider = promiseProvider(provider);
     else if (typeof provider !== "function")
       provider = valueProvider(provider);
+    else if (provider.callingConvention === INJECTED)
+      provider = injectedProvider(provider);
 
     this.providers[name] = provider;
-  },
-
-  provideInjected: function(name, f/*, extraArgs... */) {
-    if (tryMultiProvide(this,this.provideInjected,arguments))
-      return;
-
-    var args = getDependencies(f).slice(),
-        provideTimeArgs = slice.call(arguments,2);
-
-    args.push(function() {
-      var injectedArgs = slice.call(arguments);
-
-      return function() {
-        var args = injectedArgs.concat(
-          provideTimeArgs.concat(
-            slice.call(arguments)));
-
-        return f.apply(this,args);
-      };
-    });
-
-    this.provide(name,fn.sync.apply(this,args));
   },
 
   resolve: function(name, callback) {
@@ -176,7 +165,7 @@ Injector.prototype = {
 
     var provider = getProvider(injector,name);
     if (!provider)
-      throw new Error("Not provided");
+      callback(new Error("Not provided"));
 
     var parents = injector.parents;
     for (var p, i = 0, len = parents.length; i < len; i++) {
@@ -304,15 +293,20 @@ function resolveDependencies(injector, f, callback) {
   }
 }
 
-function tryMultiProvide(injector, method, args) {
-  if (args.length > 1)
-    return false;
 
-  var obj = args[0];
-  for (var name in obj)
-    method.call(injector,name,obj[name]);
+function injectedProvider(f) {
+  var args = getDependencies(f).slice();
 
-  return true;
+  args.push(function() {
+    var injectedArgs = slice.call(arguments);
+
+    return function() {
+      var args = injectedArgs.concat(slice.call(arguments));
+      return f.apply(this,args);
+    };
+  });
+
+  return fn.sync.apply(this,args);
 }
 
 
