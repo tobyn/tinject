@@ -1,6 +1,6 @@
 {
   "name": "tinject",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A tiny dependency injection library.",
   "main": "tinject.js",
   "scripts": {

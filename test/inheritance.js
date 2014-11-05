@@ -96,4 +96,17 @@ describe("Inheriting from another injector",function() {
       done();
     });
   });
+
+  it("should bubble up recursive missing providers",function(done) {
+    var child = di.injector(injector);
+
+    injector.provide("bar",di.fn.ignore("foo",function() { }));
+
+    child.resolve("bar",function(err) {
+      if (!err || err.name !== "ProviderError")
+        done(new Error("Expected ProviderError, got " + String(err)));
+      else
+        done();
+    });
+  });
 });

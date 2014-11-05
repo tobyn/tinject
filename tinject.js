@@ -164,8 +164,10 @@ Injector.prototype = {
     }
 
     var provider = getProvider(injector,name);
-    if (!provider)
+    if (!provider) {
       callback(new Error("Not provided"));
+      return;
+    }
 
     var parents = injector.parents;
     for (var p, i = 0, len = parents.length; i < len; i++) {
@@ -216,7 +218,7 @@ function hasSameDependencyGraph(a, b, dependency) {
   var aProvider = getProvider(a,dependency),
       bProvider = getProvider(b,dependency);
 
-  if (aProvider !== bProvider)
+  if (aProvider !== bProvider || !bProvider || !aProvider)
     return false;
 
   var dependencies = getDependencies(aProvider);
