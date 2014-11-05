@@ -28,15 +28,22 @@ describe("Declaring dependencies",function() {
             args,
             fDep = annotator("foo","bar",f);
 
-        function f() { args = arguments; }
+        function f() {
+          args = arguments;
+          return "success";
+        }
 
         it("should return a new function",function() {
           assert.notStrictEqual(fDep,f);
         });
 
         it("should return a proxy to the original function",function() {
-          fDep("foo");
+          var result = fDep("foo","bar","baz");
+          assert.equal(args.length,3);
           assert.equal(args[0],"foo");
+          assert.equal(args[1],"bar");
+          assert.equal(args[2],"baz");
+          assert.equal(result,"success");
         });
 
         testProperties(fDep);

@@ -42,7 +42,7 @@ describe("Inheriting from another injector",function() {
     });
 
   it("should prefer non-inherited providers",function(done) {
-    injector.provide("foo",function() { return "local"; });
+    injector.provide("foo",di.fn.sync(function() { return "local"; }));
 
     other.provide("foo","inherited");
 
@@ -57,10 +57,10 @@ describe("Inheriting from another injector",function() {
   it("should share inherited dependencies",function(done) {
     var calls = 0;
 
-    other.provide("foo",function() {
+    other.provide("foo",di.fn.sync(function() {
       calls++;
       return "foo";
-    });
+    }));
 
     injector.inherit(other);
 

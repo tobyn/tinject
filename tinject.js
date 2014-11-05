@@ -17,10 +17,10 @@ var fn = exports.fn = {},
     ifn = exports.ifn = {},
     slice = Array.prototype.slice;
 
-var IGNORE   = fn.IGNORE  = 1,
-    SYNC     = fn.SYNC    = 2,
-    ASYNC    = fn.ASYNC   = 3,
-    PROMISE  = fn.PROMISE = 4,
+var IGNORE   = fn.IGNORE   = 1,
+    SYNC     = fn.SYNC     = 2,
+    ASYNC    = fn.ASYNC    = 3,
+    PROMISE  = fn.PROMISE  = 4,
     INJECTED = fn.INJECTED = 5;
 
 fn.ignore = annotator(IGNORE,extractFn);
@@ -50,7 +50,7 @@ function copyFn(args) {
   var fn = extractFn(args);
 
   return function() {
-    fn.apply(this,arguments);
+    return fn.apply(this,arguments);
   };
 }
 
@@ -138,7 +138,7 @@ Injector.prototype = {
 
     if (typeof provider.then === "function")
       provider = promiseProvider(provider);
-    else if (typeof provider !== "function")
+    else if (!isProvider(provider))
       provider = valueProvider(provider);
     else if (provider.callingConvention === INJECTED)
       provider = injectedProvider(provider);
@@ -229,6 +229,17 @@ function hasSameDependencyGraph(a, b, dependency) {
   }
 
   return true;
+}
+
+function isProvider(f) {
+  if (typeof f !== "function")
+    return false;
+
+  var cc = f.callingConvention;
+  if (typeof cc !== "number")
+    return false;
+
+  return cc > 0 && cc < 6;
 }
 
 function normalizedApply(f, args, callback) {
@@ -326,9 +337,9 @@ function promiseProvider(promise) {
 exports.value = valueProvider;
 
 function valueProvider(value) {
-  return function() {
+  return fn.sync(function() {
     return value;
-  };
+  });
 }
 
 })();

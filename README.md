@@ -95,32 +95,21 @@ most recently inherited provider wins.
 Providers
 ---------
 
-tinject accepts several different kinds of providers. The simplest
-provider is just a value. Any non-function, non-promise is treated as a
-value automatically, and is passed untouched to anything that depends on
-the name to which it is bound. If you want to be explicit, or if you
-want to treat a function or a promise as a simple value, you can force
-it by declaring your provider as `di.value(myValue)`.
+tinject accepts the following as providers:
 
-When promises are used as providers, they are resolved, and the result
-is the provided value. If the promise is rejected, the rejection is
-treated as a provider error. Any provider with a `then` method is
-treated as a promise automatically.
+* Any value.
+* A promise, which will be resolved. If the promise is rejected, it's a
+  provider error. If you want to provide a promise *without* resolving
+  it first, provide it as `di.value(myPromise)`.
+* An annotated provider function. These functions are called when the
+  value they provide is required the first time, and they yield a value
+  that is cached by the injector.
 
 ### Provider Functions
 
-Provider functions are the most interesting, because they're the only
-ones that can actually take dependencies. By default, a function's
-return value is treated as the provided value, and it is called with no
-arguments. An exception thrown by any provider function is treated as a
-provider error.
-
-To get more interesting behavior, a function needs to be annotated with
-information about what it needs and how it produces results. This is
-done by attaching properties to the provider function, and this is
-easiest to do with some helper functions. Each of these helpers takes a
-variable number of arguments. Each argument but the last is the name of
-a dependency. The last argument is the function to be annotated.
+Provider functions have properties attached to them that indicate their
+dependencies and how they're expected to yield values. These properties
+are attached with helper functions.
 
 Note that *all* of these functions return a function that has the same
 behavior as the function they're given. You don't need an injector to
@@ -197,7 +186,7 @@ injector.provide({
   }),
 
   foobar: di.fn.sync("foo","bar",function(foo, bar) {
-    return foo + bar;
+    return foo + bar();
   })
 });
 
@@ -210,7 +199,7 @@ injector.resolve("foobar",function(err, foobar) {
 // do, and they can yield values in multiple ways as well.
 injector.invoke(di.fn.async("foo","bar","baz",
     function(foo, bar, baz, a, b, c, callback) {
-  callback(null,foo + bar + baz + a + b + c);
+  callback(null,foo + bar() + baz + a + b + c);
 }),"A","B","C",function(err, result) {
   console.log(result); // FOO!Bar!bazABC
 });
@@ -218,7 +207,7 @@ injector.invoke(di.fn.async("foo","bar","baz",
 // This is equivalent to the invoke example.
 var myFn = injector.inject(di.fn.sync("foo","bar","baz",
     function(foo, bar, baz, a, b, c) {
-  return foo + bar + baz + a + b + c;
+  return foo + bar() + baz + a + b + c;
 }),"A","B");
 
 myFn("C",function(err, result) {

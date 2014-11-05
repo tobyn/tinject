@@ -1,5 +1,5 @@
 var Promise = require("bluebird"),
-    di = require(".."),
+    di = require("../tinject"),
     fn = di.fn;
 
 var app = require("express")(),
@@ -23,13 +23,13 @@ appInjector.provide({
   // The simplest provider is just a value.
   startTime: Date.now(),
 
-  // By default, functions are treated as synchronous providers. They
-  // are called once, on demand, and the result is cached for the
-  // lifetime of the injector.
-  firstRequestTime: Date.now,
+  // This function will be called once, on the first request, and its
+  // return value will be cached for the lifetime of appInjector. An ifn
+  // function is used to avoid modifying Date.now.
+  firstRequestTime: di.ifn.sync(Date.now),
 
-  // To provide a function as a value, it must be wrapped with di.value.
-  now: di.value(Date.now),
+  // This function is injected as-is.
+  now: Date.now,
 
   // This provider doesn't *really* depend on "request". The dependency
   // is declared to prevent the value from being cached across requests.
