@@ -61,19 +61,29 @@ function extractFn(args) {
 
 exports.ProviderError = ProviderError;
 
-var captureTraces = typeof Error.captureStackTrace === "function";
-
 function ProviderError(dependency, error) {
   this.dependency = dependency;
   this.name = "ProviderError";
   this.error = error;
   this.message = dependency + ": " + (error.message || error.toString());
-
-  if (captureTraces)
-    Error.captureStackTrace(this,ProviderError);
+  setStack(this,error);
 }
 
 ProviderError.prototype = new Error();
+
+function setStack(error, cause) {
+  var chain = error.dependency,
+      stack;
+
+  while (cause instanceof ProviderError) {
+    chain += " -> " + cause.dependency;
+    cause = cause.error;
+  }
+
+  stack = cause.stack || cause.message || cause.toString();
+
+  error.stack = "ProviderError: " + chain + " caused by:\n" + stack;
+}
 
 
 exports.injector = function(/* parents... */) {
