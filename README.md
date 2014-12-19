@@ -30,26 +30,25 @@ it to a new variable of your choice.
 
 To use the library, call `di.injector()` to get a new injector.
 
-`di.injector` can be passed any number of other injectors as arguments.
-Each is passed to `inherit` on the new injector.
-
 Injector Methods
 ----------------
 
 ```js
-injector.provide(name, provider);
+injector.provide(name, provider, [override]);
 ```
-Registers a new provider under the given name. If another provider has
-already been registered for this name, an error is thrown.  See the
-**Providers** section for more information about what the injector can
-accept as a provider.
+Registers a new provider under `name`. See the **Providers** section for
+more information about what the injector can accept as a provider.
+
+If there is already a provider associated with `name` and `override` is
+omitted or is falsy, an error is thrown. Otherwise, the provider is
+updated, and any cached resolves that depended on `name` are discarded.
 
 ```js
-injector.provide(object);
+injector.provide(object, [override]);
 ```
 Calling the `provide` method with an object as the first argument will
 cause the injector to iterate over the properties of the object,
-registering a new provider for each `name`/`provider` pair.
+registering a new provider for each name/provider pair.
 
 ```js
 injector.resolve(name, callback);
@@ -91,6 +90,21 @@ Injectors prefer providers in reverse order of calls to inherit. The
 most recently inherited provider wins.
 
 `examples/express.js` demonstrates one use of injector inheritance.
+
+```js
+injector.child();
+```
+Returns a new injector that inherits from `injector`. This is shorthand
+for:
+```js
+var child = di.injector();
+child.inherit(injector);
+```
+
+```js
+injector.clone();
+```
+Creates a deep copy of `injector`.
 
 Providers
 ---------
