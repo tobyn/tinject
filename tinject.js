@@ -157,17 +157,15 @@ Injector.prototype = {
     });
   },
 
-  provide: function(name, provider/*, extraArgs... */) {
+  provide: function(name, provider, override) {
     if (typeof name === "object") {
-      var extraArgs = slice.call(arguments,1);
-
       for (var realName in name)
-        this.provide.apply(this,[realName,name[realName]].concat(extraArgs));
+        this.provide.call(this,realName,name[realName],provider);
 
       return;
     }
 
-    if (name in this.providers)
+    if (name in this.providers && !override)
       throw new Error(name + ": Provider already defined");
 
     if (typeof provider.then === "function")
@@ -178,6 +176,8 @@ Injector.prototype = {
       provider = injectedProvider(provider);
 
     this.providers[name] = provider;
+
+    invalidateCache(this,name);
   },
 
   resolve: function(name, callback) {
@@ -216,11 +216,10 @@ Injector.prototype = {
 
     injector.invoke(provider,function(err, value) {
       cache[name] = [err, value];
+      delete resolveQueues[name];
 
       for (var i = 0, len = queue.length; i < len; i++)
         queue[i](err,value);
-
-      delete resolveQueues[name];
     });
 
     function resolvedInParent(err, value) {
@@ -246,6 +245,20 @@ function getProvider(injector, dependency) {
     if (provider)
       return provider;
   }
+}
+
+function hasDependency(injector, name, dependency) {
+  if (name === dependency)
+    return true;
+
+  var dependencies = getDependencies(getProvider(injector,name));
+
+  for (var i = 0, len = dependencies.length; i < len; i++) {
+    if (hasDependency(injector,dependencies[i],dependency))
+      return true;
+  }
+
+  return false;
 }
 
 function hasSameDependencyGraph(a, b, dependency) {
@@ -274,6 +287,15 @@ function isProvider(f) {
     return false;
 
   return cc > 0 && cc < 6;
+}
+
+function invalidateCache(injector, invalid) {
+  var cache = injector.cache;
+
+  for (var cached in cache) {
+    if (hasDependency(injector,cached,invalid))
+      delete cache[cached];
+  }
 }
 
 function normalizedApply(f, args, callback) {
