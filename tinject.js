@@ -107,6 +107,28 @@ Injector.prototype = {
     return child;
   },
 
+  clone: function() {
+    var clone = new Injector(),
+        c, p,
+        cache = this.cache,
+        cloneCache = clone.cache,
+        parents = this.parents,
+        cloneParents = clone.parents,
+        providers = this.providers,
+        cloneProviders = clone.providers;
+
+    for (c in cache)
+      cloneCache[c] = cache[c];
+
+    for (p in parents)
+      cloneParents[p] = parents[p];
+
+    for (p in providers)
+      cloneProviders[p] = providers[p];
+
+    return clone;
+  },
+
   inherit: function(other) {
     this.parents.unshift(other);
   },
