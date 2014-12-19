@@ -118,7 +118,7 @@ function router(appInjector) {
     return function(req, res, next) {
       // Inheriting from appInjector makes all of appInjector's
       // providers available to the new injector.
-      var inj = di.injector(appInjector);
+      var inj = appInjector.child();
 
       // Computations that depend on these values will only be cached
       // for as long as the inherited injector is in use. In this case,

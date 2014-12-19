@@ -3,18 +3,16 @@ var _ = require("lodash"),
     async = require("async"),
     di = require("..");
 
-describe("Inheriting from another injector",function() {
-  var injector, other;
+describe("A child injector",function() {
+  var injector, parent;
 
   beforeEach(function() {
-    injector = di.injector();
-    other = di.injector();
-
-    injector.inherit(other);
+    parent = di.injector();
+    injector = parent.child();
   });
 
   it("should make the parent's providers available",function(done) {
-    other.provide("foo","foo");
+    parent.provide("foo","foo");
 
     injector.invoke(di.fn.ignore("foo",function(foo) {
       assert.equal(foo,"foo");
@@ -26,12 +24,12 @@ describe("Inheriting from another injector",function() {
 
   it("should prefer providers from more recently inherited injectors",
     function(done) {
-      var newer = di.injector();
+      var newerParent = di.injector();
 
-      other.provide("foo","older");
-      newer.provide("foo","newer");
+      parent.provide("foo","older");
+      newerParent.provide("foo","newer");
 
-      injector.inherit(newer);
+      injector.inherit(newerParent);
 
       injector.invoke(di.fn.ignore("foo",function(foo) {
         assert.equal(foo,"newer");
@@ -44,7 +42,7 @@ describe("Inheriting from another injector",function() {
   it("should prefer non-inherited providers",function(done) {
     injector.provide("foo",di.fn.sync(function() { return "local"; }));
 
-    other.provide("foo","inherited");
+    parent.provide("foo","inherited");
 
     injector.invoke(di.fn.ignore("foo",function(foo) {
       assert.equal(foo,"local");
@@ -57,18 +55,18 @@ describe("Inheriting from another injector",function() {
   it("should share inherited dependencies",function(done) {
     var calls = 0;
 
-    other.provide("foo",di.fn.sync(function() {
+    parent.provide("foo",di.fn.sync(function() {
       calls++;
       return "foo";
     }));
 
-    injector.inherit(other);
+    injector.inherit(parent);
 
     var f = di.fn.sync("foo",_.identity);
 
     async.series([
       injector.inject(f),
-      other.inject(f)
+      parent.inject(f)
     ],function(err, results) {
       assert.ifError(err);
       assert.deepEqual(results,["foo","foo"]);
@@ -78,18 +76,18 @@ describe("Inheriting from another injector",function() {
   });
 
   it("should require an identical dependency graph for sharing",function(done) {
-    other.provide("foobar",di.fn.sync("foo",function(foo) {
+    parent.provide("foobar",di.fn.sync("foo",function(foo) {
       return foo + "bar";
     }));
 
     injector.provide("foo","FOO");
-    other.provide("foo","foo");
+    parent.provide("foo","foo");
 
     var f = di.fn.sync("foobar",_.identity);
 
     async.series([
       injector.inject(f),
-      other.inject(f)
+      parent.inject(f)
     ],function(err, results) {
       assert.ifError(err);
       assert.deepEqual(results,["FOObar","foobar"]);
@@ -98,11 +96,9 @@ describe("Inheriting from another injector",function() {
   });
 
   it("should bubble up recursive missing providers",function(done) {
-    var child = di.injector(injector);
+    parent.provide("bar",di.fn.ignore("foo",function() { }));
 
-    injector.provide("bar",di.fn.ignore("foo",function() { }));
-
-    child.resolve("bar",function(err) {
+    injector.resolve("bar",function(err) {
       if (!err || err.name !== "ProviderError")
         done(new Error("Expected ProviderError, got " + String(err)));
       else

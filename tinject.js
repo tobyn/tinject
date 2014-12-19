@@ -1,4 +1,5 @@
 (function() {
+"use strict";
 
 var exports;
 if (typeof module !== "undefined") {
@@ -86,13 +87,8 @@ function setStack(error, cause) {
 }
 
 
-exports.injector = function(/* parents... */) {
-  var injector = new Injector();
-
-  for (var i = 0, len = arguments.length; i < len; i++)
-    injector.inherit(arguments[i]);
-
-  return injector;
+exports.injector = function() {
+  return new Injector();
 };
 
 exports.Injector = Injector;
@@ -105,6 +101,12 @@ function Injector() {
 }
 
 Injector.prototype = {
+  child: function() {
+    var child = new Injector();
+    child.inherit(this);
+    return child;
+  },
+
   inherit: function(other) {
     this.parents.unshift(other);
   },
@@ -256,19 +258,19 @@ function normalizedApply(f, args, callback) {
   var cc = f.callingConvention;
   try {
     if (cc === IGNORE) {
-      f.apply(this,args);
+      f.apply(null,args);
       callback();
     } else if (cc === ASYNC) {
       args = args.slice();
       args.push(callback);
-      f.apply(this,args);
+      f.apply(null,args);
     } else if (cc === PROMISE) {
-      f.apply(this,args)
+      f.apply(null,args)
         .then(function(value) {
           callback(null,value);
         },callback);
     } else {
-      callback(null,f.apply(this,args));
+      callback(null,f.apply(null,args));
     }
   } catch (err) {
     callback(err);
@@ -329,7 +331,7 @@ function injectedProvider(f) {
     };
   });
 
-  return fn.sync.apply(this,args);
+  return fn.sync.apply(null,args);
 }
 
 

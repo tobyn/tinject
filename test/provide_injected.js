@@ -25,7 +25,7 @@ describe("A provided injected function",function() {
   });
 
   it("should resolve dependecies in children if inherited",function(done) {
-    var child = di.injector(injector);
+    var child = injector.child();
 
     child.provide("foo","fu");
 
