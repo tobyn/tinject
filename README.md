@@ -136,6 +136,11 @@ di.fn.sync([dependencies...,] fn);
 Sync providers use their return value as the provided value.
 
 ```js
+di.fn.constructor([dependencies...,] constructor);
+```
+Constructor providers are instantiated with their dependencies.
+
+```js
 di.fn.async([dependencies...,] fn);
 ```
 Async providers receive a node.js-style callback function as their final

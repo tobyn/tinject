@@ -18,23 +18,29 @@ var fn = exports.fn = {},
     ifn = exports.ifn = {},
     slice = Array.prototype.slice;
 
-var IGNORE   = fn.IGNORE   = 1,
-    SYNC     = fn.SYNC     = 2,
-    ASYNC    = fn.ASYNC    = 3,
-    PROMISE  = fn.PROMISE  = 4,
-    INJECTED = fn.INJECTED = 5;
+var MIN_CALLING_CONVENTION = 1,
+    MAX_CALLING_CONVENTION = 6;
+
+var IGNORE      = fn.IGNORE      = 1,
+    SYNC        = fn.SYNC        = 2,
+    ASYNC       = fn.ASYNC       = 3,
+    PROMISE     = fn.PROMISE     = 4,
+    INJECTED    = fn.INJECTED    = 5,
+    CONSTRUCTOR = fn.CONSTRUCTOR = 6;
 
 fn.ignore = annotator(IGNORE,extractFn);
 fn.sync = annotator(SYNC,extractFn);
 fn.async = annotator(ASYNC,extractFn);
 fn.promise = annotator(PROMISE,extractFn);
 fn.injected = annotator(INJECTED,extractFn);
+fn.constructor = annotator(CONSTRUCTOR,extractFn);
 
 ifn.ignore = annotator(IGNORE,copyFn);
 ifn.sync = annotator(SYNC,copyFn);
 ifn.async = annotator(ASYNC,copyFn);
 ifn.promise = annotator(PROMISE,copyFn);
 ifn.injected = annotator(INJECTED,copyFn);
+ifn.constructor = annotator(CONSTRUCTOR,copyFn);
 
 function annotator(callingConvention, extractor) {
   return function(/* dependencies..., f */) {
@@ -49,10 +55,12 @@ function annotator(callingConvention, extractor) {
 
 function copyFn(args) {
   var fn = extractFn(args);
+  copy.prototype = fn.prototype;
+  return copy;
 
-  return function() {
-    return fn.apply(this,arguments);
-  };
+  function copy() {
+    return fn.apply(this,arguments); // jshint ignore:line
+  }
 }
 
 function extractFn(args) {
@@ -286,7 +294,7 @@ function isProvider(f) {
   if (typeof cc !== "number")
     return false;
 
-  return cc > 0 && cc < 6;
+  return cc >= MIN_CALLING_CONVENTION && cc <= MAX_CALLING_CONVENTION;
 }
 
 function invalidateCache(injector, invalid) {
@@ -301,24 +309,46 @@ function invalidateCache(injector, invalid) {
 function normalizedApply(f, args, callback) {
   var cc = f.callingConvention;
   try {
-    if (cc === IGNORE) {
-      f.apply(null,args);
-      callback();
-    } else if (cc === ASYNC) {
-      args = args.slice();
-      args.push(callback);
-      f.apply(null,args);
-    } else if (cc === PROMISE) {
-      f.apply(null,args)
-        .then(function(value) {
-          callback(null,value);
-        },callback);
-    } else {
-      callback(null,f.apply(null,args));
+    switch (cc) {
+      case IGNORE:
+        f.apply(null,args);
+        callback();
+        break;
+
+      case ASYNC:
+        args = args.slice();
+        args.push(callback);
+        f.apply(null,args);
+        break;
+
+      case PROMISE:
+        f.apply(null,args)
+          .then(function(value) {
+            callback(null,value);
+          },callback);
+        break;
+
+      case CONSTRUCTOR:
+        callback(null,constructObject(f,args));
+        break;
+
+      default:
+        callback(null,f.apply(null,args));
+        break;
     }
   } catch (err) {
     callback(err);
   }
+}
+
+function constructObject(originalConstructor, args) {
+  function Constructor() {
+    originalConstructor.apply(this,args);
+  }
+
+  Constructor.prototype = originalConstructor.prototype;
+
+  return new Constructor();
 }
 
 function resolveDependencies(injector, f, callback) {

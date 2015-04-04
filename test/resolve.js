@@ -307,4 +307,41 @@ describe("Resolving a dependency",function() {
       });
     });
   });
+
+  describe("from a constructor function",function() {
+    it("should instantiate a new object",function(done) {
+      injector.provide("foo",di.fn.constructor(MyType));
+
+      injector.resolve("foo",function(err, obj) {
+        try {
+          assert.ok(!err,"Unexpected error");
+          assert.ok(obj instanceof MyType,"Object is wrong type");
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+
+      function MyType() { }
+    });
+
+    it("should pass constructor arguments",function(done) {
+      injector.provide("foo",42);
+      injector.provide("bar",di.ifn.constructor("foo",MyType));
+
+      injector.resolve("bar",function(err, obj) {
+        try {
+          assert.ok(obj instanceof MyType,"Object is wrong type");
+          assert.strictEqual(obj.foo,42);
+          done();
+        } catch (e) {
+          done(e);
+        }
+      });
+
+      function MyType(foo) {
+        this.foo = foo;
+      }
+    });
+  });
 });
