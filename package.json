@@ -9,7 +9,7 @@
   "author": "Tobyn Baugher <tobynb@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "async": "^0.9.0",
+    "async": "^3.2.2",
     "bluebird": "^2.9.24",
     "express": "^4.12.3",
     "jshint": "^2.6.3",
